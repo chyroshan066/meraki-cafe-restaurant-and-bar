@@ -11,6 +11,8 @@ export interface MenuType {
     title: string;
     badge?: string;
     cost: string;
+    description?: string;
+    imgSrc?: string;
 }
 
 export interface Menu {
