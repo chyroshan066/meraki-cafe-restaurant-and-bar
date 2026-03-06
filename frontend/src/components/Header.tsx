@@ -6,6 +6,7 @@ import { memo, useEffect, useMemo, useState, useCallback } from "react";
 import { NavLink } from "@/types";
 import { NAV_LINKS } from "@/constants";
 import { NavButton } from "./utility/Button/NavButton";
+import Login from "./Login";
 
 const NavItem = memo(({ href, isActive, name }: NavLink) => (
   <>
@@ -184,7 +185,10 @@ export const Header = memo(() => {
               href="#contact"
             />
 
-            <NavButton className="btn-login" btnText="Login" href="/login" />
+            <Login />
+
+
+           
           </div>
 
           <button

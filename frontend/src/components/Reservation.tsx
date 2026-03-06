@@ -1,11 +1,9 @@
 "use client";
 
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { IonIcon } from "./utility/IonIcon";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { onSubmit } from "@/utils/formData";
 import { ReservationFormData, ReservationFormSchema } from "@/middlewares/schema";
 import { ErrorMessage, InputField } from "./utility/InputField";
 import { SubmitButton } from "./utility/Button/SubmitButton";
@@ -32,17 +30,11 @@ export const Reservation = memo(() => {
         register,
         handleSubmit,
         reset,
-        formState: {
-            errors,
-            isSubmitting,
-        }
+        formState: { errors, isSubmitting }
     } = useForm<ReservationFormData>({
         defaultValues: initialValues,
         resolver: zodResolver(ReservationFormSchema),
-        mode: "onChange", // Enable real-time validation for better UX
-        reValidateMode: "onChange", // Re-validate on every change
-        criteriaMode: "all", // Show all validation errors
-        shouldFocusError: true, // Focus on error field
+        mode: "onChange",
     });
 
     const showAlert = useCallback((
@@ -65,31 +57,80 @@ export const Reservation = memo(() => {
         }));
     }, []);
 
+    // Convert 12hr format to 24hr (HH:MM)
+    const formatTime = (time: string) => {
+        const isPM = time.toLowerCase().includes("pm");
+        let [hour] = time.replace(/am|pm/i, "").split(":");
+        let hourNum = parseInt(hour);
+
+        if (isPM && hourNum !== 12) hourNum += 12;
+        if (!isPM && hourNum === 12) hourNum = 0;
+
+        return `${hourNum.toString().padStart(2, "0")}:00`;
+    };
+
     const handleFormSubmit = useCallback(async (data: ReservationFormData) => {
-        try {
-            await onSubmit(data);
+    try {
+        const token = localStorage.getItem("token");
 
-            showAlert(
-                "success",
-                "Thank you! Your table has been reserved successfully. We look forward to serving you.",
-                "Table Reserved!"
-            );
-
-            reset(initialValues);
-        } catch (error) {
-            const errorMessage = error instanceof Error
-                ? error.message
-                : "Something went wrong while booking the table. Please try again.";
-
-            showAlert(
-                "error",
-                errorMessage,
-                "Sending Failed"
-            );
-
-            console.error('Form submission error:', error);
+        if (!token) {
+            throw new Error("You must be logged in to make a reservation.");
         }
-    }, [reset, showAlert]);
+
+        const number_of_guests = parseInt(data.person.split("-")[0]);
+
+        const formatTime = (time: string) => {
+            const isPM = time.toLowerCase().includes("pm");
+            let [hour] = time.replace(/am|pm/i, "").split(":");
+            let hourNum = parseInt(hour);
+
+            if (isPM && hourNum !== 12) hourNum += 12;
+            if (!isPM && hourNum === 12) hourNum = 0;
+
+            return `${hourNum.toString().padStart(2, "0")}:00`;
+        };
+
+        const formattedData = {
+            date: data.date,
+            time: formatTime(data.time),
+            number_of_guests,
+            name: data.name,
+            phone_no: data.phone,
+            message: data.message,
+        };
+
+        const response = await fetch("http://localhost:5000/api/reservations", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`, // ✅ TOKEN ADDED HERE
+            },
+            body: JSON.stringify(formattedData),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to create reservation");
+        }
+
+        showAlert(
+            "success",
+            "Your table has been reserved successfully!",
+            "Table Reserved!"
+        );
+
+        reset(initialValues);
+
+    } catch (error) {
+        const errorMessage =
+            error instanceof Error
+                ? error.message
+                : "Something went wrong while booking the table.";
+
+        showAlert("error", errorMessage, "Reservation Failed");
+        console.error("Reservation error:", error);
+    }
+}, [reset, showAlert]);
 
     const onFormSubmit = handleSubmit(handleFormSubmit);
 
@@ -103,38 +144,31 @@ export const Reservation = memo(() => {
         [isSubmitting]
     );
 
-    return <>
-        <Alert
-            type={alertState.type}
-            title={alertState.title}
-            message={alertState.message}
-            isVisible={alertState.isVisible}
-            onDismiss={hideAlert}
-            autoDismiss={true}
-            autoDismissDelay={6000}
-            className="sm:max-w-md"
-        />
+    return (
+        <>
+            <Alert
+                type={alertState.type}
+                title={alertState.title}
+                message={alertState.message}
+                isVisible={alertState.isVisible}
+                onDismiss={hideAlert}
+                autoDismiss={true}
+                autoDismissDelay={6000}
+            />
 
-        <section
-            className="reservation"
-            aria-label="contact-label"
-            id="contact"
-        >
-            <div className="custom-container">
-                <div className="form reservation-form bg-black-10">
-                    <form
-                        className="form-left"
-                        onSubmit={onFormSubmit}
-                        noValidate
-                    >
-                        <h2 className="headline-1 text-center">Online Reservation</h2>
-                        <p className="form-text text-center">
-                            Booking request <a href="tel:+9779703630464" className="link">+977-9703630464 </a>
-                            or fill out the order form
-                        </p>
-                        <div className="input-wrapper">
+            <section className="reservation" id="contact">
+                <div className="custom-container">
+                    <div className="form reservation-form bg-black-10">
+                        <form
+                            className="form-left"
+                            onSubmit={onFormSubmit}
+                            noValidate
+                        >
+                            <h2 className="headline-1 text-center">
+                                Online Reservation
+                            </h2>
 
-                            <div style={{ marginBottom: '20px' }}>
+                            <div className="input-wrapper">
                                 <InputField
                                     id="name"
                                     placeholder="Your Name"
@@ -142,9 +176,7 @@ export const Reservation = memo(() => {
                                     error={errors.name?.message}
                                     disabled={isSubmitting}
                                 />
-                            </div>
 
-                            <div style={{ marginBottom: '20px' }}>
                                 <InputField
                                     id="phone"
                                     type="tel"
@@ -155,102 +187,70 @@ export const Reservation = memo(() => {
                                 />
                             </div>
 
-                        </div>
-                        <div className="input-wrapper">
-                            <div className="icon-wrapper">
+                            <div className="input-wrapper">
 
-                                <IonIcon
-                                    name="person-outline"
-                                    aria-hidden="true"
-                                />
+                                <div className="icon-wrapper">
+                                    <IonIcon name="person-outline" />
 
-                                <select
-                                    {...register("person")}
-                                    className="input-field"
-                                >
-                                    {[...Array(7)].map((_, index) => (
-                                        <option
-                                            key={index}
-                                            value={`${index + 1}-person`}
-                                        >
-                                            {index + 1} Person
-                                        </option>
-                                    ))}
-                                </select>
+                                    <select
+                                        {...register("person")}
+                                        className="input-field"
+                                    >
+                                        {[...Array(7)].map((_, index) => (
+                                            <option
+                                                key={index}
+                                                value={`${index + 1}-person`}
+                                            >
+                                                {index + 1} Person
+                                            </option>
+                                        ))}
+                                    </select>
 
-                                <ErrorMessage message={errors.person?.message} />
+                                    <ErrorMessage message={errors.person?.message} />
+                                </div>
 
-                                <IonIcon
-                                    name="chevron-down"
-                                    aria-hidden="true"
-                                />
+                                <div className="icon-wrapper">
+                                    <IonIcon name="calendar-clear-outline" />
 
+                                    <InputField
+                                        id="date"
+                                        type="date"
+                                        register={register("date")}
+                                        error={errors.date?.message}
+                                        disabled={isSubmitting}
+                                    />
+                                </div>
+
+                                <div className="icon-wrapper">
+                                    <IonIcon name="time-outline" />
+
+                                    <select
+                                        {...register("time")}
+                                        className="input-field"
+                                    >
+                                        {[...Array(3)].map((_, index) => (
+                                            <option
+                                                key={index}
+                                                value={`${10 + index}:00am`}
+                                            >
+                                                {10 + index}:00 am
+                                            </option>
+                                        ))}
+
+                                        {[...Array(10)].map((_, index) => (
+                                            <option
+                                                key={index}
+                                                value={`${index < 9 ? `0${1 + index}` : 1 + index}:00pm`}
+                                            >
+                                                {index < 9 ? `0${1 + index}` : 1 + index}:00 pm
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    <ErrorMessage message={errors.time?.message} />
+                                </div>
                             </div>
 
-                            <div className={`icon-wrapper`}>
-
-                                <IonIcon
-                                    name="calendar-clear-outline"
-                                    aria-hidden="true"
-                                />
-
-                                <InputField
-                                    id="date"
-                                    type="date"
-                                    register={register("date")}
-                                    error={errors.date?.message}
-                                    disabled={isSubmitting}
-                                />
-
-                                <IonIcon
-                                    name="chevron-down"
-                                    aria-hidden="true"
-                                />
-
-                            </div>
-
-                            <div className="icon-wrapper">
-
-                                <IonIcon
-                                    name="time-outline"
-                                    aria-hidden="true"
-                                />
-
-                                <select
-                                    {...register("time")}
-                                    className="input-field"
-                                >
-                                    {[...Array(3)].map((_, index) => (
-                                        <option
-                                            key={index}
-                                            value={`${10 + index}:00am`}
-                                        >
-                                            {10 + index} : 00 am
-                                        </option>
-                                    ))}
-
-                                    {[...Array(10)].map((_, index) => (
-                                        <option
-                                            key={index}
-                                            value={`${index < 9 ? `0${1 + index}` : 1 + index}:00pm`}
-                                        >
-                                            {index < 9 ? `0${1 + index}` : 1 + index} : 00 pm
-                                        </option>
-                                    ))}
-
-                                </select>
-
-                                <ErrorMessage message={errors.time?.message} />
-
-                                <IonIcon
-                                    name="chevron-down"
-                                    aria-hidden="true"
-                                />
-
-                            </div>
-                        </div>
-
-                        <div style={{ marginBottom: '20px' }}>
                             <InputField
                                 id="message"
                                 placeholder="Message"
@@ -259,43 +259,17 @@ export const Reservation = memo(() => {
                                 error={errors.message?.message}
                                 disabled={isSubmitting}
                             />
-                        </div>
 
-                        <SubmitButton
-                            isButtonDisabled={isButtonDisabled}
-                            btnText={buttonText}
-                        />
-
-                    </form>
-
-                    <div
-                        className="form-right text-center"
-                        style={{ "backgroundImage": "url('/images/form-pattern.webp')" } as React.CSSProperties}
-                    >
-                        <h2 className="headline-1 text-center">Contact Us</h2>
-                        <p className="contact-label">Booking Request</p>
-                        <a
-                            href="tel:+9779703630464"
-                            className="body-1 contact-number hover-underline"
-                        >
-                            9703630464
-                        </a>
-                        <div className="separator"></div>
-                        <p className="contact-label">Location</p>
-                        <address className="body-4">
-                            Campus Mode,  <br />
-                            Bhadrapur, Nepal
-                        </address>
-                        <p className="contact-label">Daily</p>
-                        <p className="body-4">
-                            Monday to Sunday <br />
-                            9.00 am - 10.00pm
-                        </p>
+                            <SubmitButton
+                                isButtonDisabled={isButtonDisabled}
+                                btnText={buttonText}
+                            />
+                        </form>
                     </div>
                 </div>
-            </div>
-        </section>
-    </>;
+            </section>
+        </>
+    );
 });
 
 Reservation.displayName = "Reservation";

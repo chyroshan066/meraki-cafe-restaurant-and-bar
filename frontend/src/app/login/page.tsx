@@ -3,15 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { storeAuth } from '@/lib/clientApi';
-import { Loader2, Mail, Lock, User, ArrowRight } from 'lucide-react'; // Suggested icons
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ??
-  'https://meraki-cafe-restaurant-and-bar-one.vercel.app/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5000/api';
 
-export default function AuthPage() {
+export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [isRegister, setIsRegister] = useState(false); // Toggle state
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,155 +20,136 @@ export default function AuthPage() {
     setError(null);
     setLoading(true);
 
-    try {
-      const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
-      const body = mode === 'login' ? { email, password } : { name, email, password };
+    const endpoint = isRegister ? '/auth/register' : '/auth/login';
+    const payload = isRegister ? { name, email, password } : { email, password };
 
+    try {
       const res = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || 'Authentication failed');
 
+      if (!res.ok) {
+        throw new Error(data?.message || 'Authentication failed');
+      }
+
+      // Automatically log in after registration or use login data
       storeAuth(data.token, data.user);
       router.push('/');
-      router.refresh();
+      router.refresh(); 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(err instanceof Error ? err.message : 'Action failed');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-[#050505] p-4 font-sans selection:bg-[#63d3a6]/30">
-      
-      {/* Background with Texture/Image Overlay */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=2070')] bg-cover bg-center opacity-20 grayscale" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/80 via-[#050505] to-[#050505]" />
+    <div className="relative flex min-h-screen items-center justify-center bg-[#0a0a0a] p-6 selection:bg-[#63d3a6]/30">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[10%] -left-[10%] h-[40%] w-[40%] rounded-full bg-[#63d3a6]/5 blur-[120px]" />
+        <div className="absolute -bottom-[10%] -right-[10%] h-[40%] w-[40%] rounded-full bg-[#63d3a6]/5 blur-[120px]" />
       </div>
 
-      <div className="relative z-10 w-full max-w-[440px]">
-        
-        {/* Branding */}
-        <div className="mb-8 text-center">
-          <h1 className="text-5xl font-serif tracking-tight text-white mb-2">
-            Hidden <span className="italic text-[#63d3a6]">Hut</span>
-          </h1>
-          <div className="h-px w-12 bg-[#63d3a6] mx-auto mb-4" />
-          <p className="text-sm uppercase tracking-[0.2em] text-gray-500">
-            {mode === 'login' ? 'Welcome Back' : 'Join the Table'}
+      <div className="w-full max-w-[420px] z-10">
+        <div className="mb-10 text-center">
+          <h2 className="text-[10px] uppercase tracking-[0.5em] text-[#63d3a6] font-bold mb-3">
+            {isRegister ? 'New Account' : 'Secure Access'}
+          </h2>
+          <h1 className="text-4xl font-serif italic text-white tracking-tight">Hidden Hut</h1>
+          <p className="mt-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">
+            Administrative Portal
           </p>
         </div>
 
-        {/* Main Card */}
-        <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-2xl">
-          <form className="p-8 md:p-10" onSubmit={handleSubmit}>
+        <div className="border border-white/5 bg-white/[0.02] p-8 md:p-10 backdrop-blur-md shadow-2xl">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             
-            <div className="space-y-5">
-              {/* Name Field (Animated height/opacity in real CSS, conditional here) */}
-              {mode === 'register' && (
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Full Name</label>
-                  <div className="relative group">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#63d3a6] transition-colors" />
-                    <input
-                      type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full rounded-lg border border-white/5 bg-white/5 py-3 pl-10 pr-4 text-white outline-none ring-1 ring-transparent focus:ring-[#63d3a6]/50 focus:border-[#63d3a6] transition-all"
-                      placeholder="John Doe"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Email Field */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Email Address</label>
-                <div className="relative group">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#63d3a6] transition-colors" />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-lg border border-white/5 bg-white/5 py-3 pl-10 pr-4 text-white outline-none ring-1 ring-transparent focus:ring-[#63d3a6]/50 focus:border-[#63d3a6] transition-all"
-                    placeholder="you@example.com"
-                  />
-                </div>
+            {/* Show Name field only if Registering */}
+            {isRegister && (
+              <div className="space-y-2 animate-in fade-in duration-500">
+                <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 ml-1">
+                  Admin Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full border-b border-white/10 bg-transparent px-1 py-3 text-sm text-white outline-none focus:border-[#63d3a6] transition-all placeholder:text-gray-800"
+                  placeholder="Full Name"
+                />
               </div>
+            )}
 
-              {/* Password Field */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Password</label>
-                  {mode === 'login' && <button type="button" className="text-[10px] text-gray-500 hover:text-[#63d3a6]">Forgot?</button>}
-                </div>
-                <div className="relative group">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#63d3a6] transition-colors" />
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-lg border border-white/5 bg-white/5 py-3 pl-10 pr-4 text-white outline-none ring-1 ring-transparent focus:ring-[#63d3a6]/50 focus:border-[#63d3a6] transition-all"
-                    placeholder="••••••••"
-                  />
-                </div>
-              </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 ml-1">
+                Email Identity
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full border-b border-white/10 bg-transparent px-1 py-3 text-sm text-white outline-none focus:border-[#63d3a6] transition-all placeholder:text-gray-800"
+                placeholder="admin@hiddenhut.com"
+              />
             </div>
 
-            {/* Error Message */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 ml-1">
+                Security Key
+              </label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full border-b border-white/10 bg-transparent px-1 py-3 text-sm text-white outline-none focus:border-[#63d3a6] transition-all placeholder:text-gray-800"
+                placeholder="••••••••"
+              />
+            </div>
+
             {error && (
-              <div className="mt-6 rounded-md bg-red-500/10 border border-red-500/20 px-4 py-3 text-xs text-red-400 animate-in fade-in zoom-in duration-200">
+              <div className="bg-rose-950/20 border border-rose-900/50 px-4 py-3 text-[11px] text-rose-400 italic text-center uppercase tracking-wider">
                 {error}
               </div>
             )}
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="group mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-[#63d3a6] py-4 text-sm font-bold uppercase tracking-widest text-[#0a2e1f] transition-all hover:bg-[#74e2b5] active:scale-[0.98] disabled:opacity-70"
-            >
-              {loading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <>
-                  {mode === 'login' ? 'Sign In' : 'Create Account'}
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
-            </button>
-          </form>
+            <div className="space-y-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="group relative w-full overflow-hidden bg-[#63d3a6] py-4 text-[11px] font-bold uppercase tracking-[0.3em] text-[#0a2e1f] transition-all hover:bg-[#52b18c] disabled:opacity-50 mt-2"
+              >
+                <span className="relative z-10">
+                  {loading ? 'Verifying...' : isRegister ? 'Create Admin Account' : 'Authorize Login'}
+                </span>
+              </button>
 
-          {/* Switcher Footer */}
-          <div className="border-t border-white/5 bg-black/20 py-6 text-center text-sm">
-            <span className="text-gray-500">
-              {mode === 'login' ? "Don't have an account?" : "Already a member?"}
-            </span>{' '}
-            <button
-              onClick={() => {
-                setMode(mode === 'login' ? 'register' : 'login');
-                setError(null);
-              }}
-              className="font-bold text-[#63d3a6] hover:text-white transition-colors"
-            >
-              {mode === 'login' ? 'Register' : 'Login'}
-            </button>
-          </div>
+              {/* Toggle Link */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegister(!isRegister);
+                  setError(null);
+                }}
+                className="w-full text-center text-[10px] uppercase tracking-widest text-gray-500 hover:text-[#63d3a6] transition-colors"
+              >
+                {isRegister ? 'Already have access? Login' : 'New Admin? Request Access'}
+              </button>
+            </div>
+          </form>
         </div>
 
-        {/* Bottom Credits */}
-        <p className="mt-8 text-center text-[10px] uppercase tracking-[0.3em] text-gray-600">
-          Est. 2026 • Culinary Excellence
-        </p>
+        <div className="mt-8 text-center">
+          <p className="text-[9px] uppercase tracking-[0.3em] text-gray-700">
+            For Authorized Use Only &copy; 2026
+          </p>
+        </div>
       </div>
     </div>
   );
