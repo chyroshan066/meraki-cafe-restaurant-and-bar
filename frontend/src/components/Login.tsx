@@ -128,6 +128,7 @@ export default function Login() {
 
   useEffect(() => {
     const u = localStorage.getItem("user");
+
     if (u) setUser(JSON.parse(u));
 
     const close = (e: MouseEvent) =>
@@ -170,7 +171,7 @@ export default function Login() {
               </div>
 
               {/* Conditional Rendering: Admin Dashboard vs Customer Bookings */}
-              {user?.role === "ADMIN" ? (
+              {user?.role === "admin" ? (
                 <Link
                   href={ADMIN_DASHBOARD_URL}
                   onClick={() => setOpen(false)}
