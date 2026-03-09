@@ -7,11 +7,11 @@ import { Header } from '@/components/Header';
 import { Hero } from '@/components/Hero';
 import { Service } from '@/components/Service';
 import { About } from '@/components/About';
-import { SpecialDish } from '@/components/SpecialDish';
+// import { SpecialDish } from '@/components/SpecialDish';
 import { Menu } from '@/components/Menu';
 import { Reservation } from '@/components/Reservation';
 import { Features } from '@/components/Features';
-import { Event } from '@/components/Event';
+// import { Event } from '@/components/Event';
 import { Footer } from '@/components/Footer';
 import { BackToTop } from '@/components/BackToTop';
 import { EventHall } from '@/components/EventHall';
@@ -48,13 +48,13 @@ export default function Home() {
               <Hero />
               <Service />
               <About />
-              <SpecialDish />
+              {/* <SpecialDish /> */}
               <Menu />
               <EventHall />
               <Testimonial />
               <Reservation />
               <Features />
-              <Event />
+              {/* <Event /> */}
             </article>
           </main>
           <Footer />
