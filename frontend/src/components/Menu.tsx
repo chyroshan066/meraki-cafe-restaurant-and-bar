@@ -244,7 +244,12 @@ const MenuCategory = memo(
     className?: string;
   }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const itemsToShow = isExpanded ? arr : arr.slice(0, 6);
+    
+    // Set your limit here
+    const LIMIT = 4;
+    
+    // Use the LIMIT for the slice so it only shows 4 initially
+    const itemsToShow = isExpanded ? arr : arr.slice(0, LIMIT);
 
     return (
       <div className={className}>
@@ -262,7 +267,9 @@ const MenuCategory = memo(
             />
           ))}
         </ul>
-        {arr.length > 6 && (
+        
+        {/* Only show button if array is longer than your limit */}
+        {arr.length > LIMIT && (
           <button
             className="btn btn-primary mt-30 mx-auto"
             onClick={() => setIsExpanded(!isExpanded)}
