@@ -29,27 +29,27 @@ const AuthModal = ({
       <div className="relative w-full max-w-sm bg-[#0d0d0d] border border-white/10 p-8 text-center shadow-2xl rounded-sm">
         <div className="w-12 h-[1px] bg-[#c19977] mx-auto mb-6 opacity-50"></div>
         <p className="text-[#c19977] uppercase tracking-[0.4em] text-[10px] mb-3">
-          Priority Access
+          Login Required
         </p>
         <h2 className="text-2xl font-serif italic text-white mb-4">
-          Secure Your Table
+          Savor the Experience
         </h2>
-        <p className="text-gray-400 text-xs mb-8 leading-relaxed tracking-wide">
-          To manage your reservations and ensure a seamless dining experience,
-          please sign in to your Meraki Restro account.
+        <p className="text-gray-400 text-2xl mb-8 leading-relaxed tracking-wide">
+          To finalize your order and explore our curated flavors, please sign in
+          to your Meraki Restro account.
         </p>
         <div className="space-y-3">
           <Link
             href="/login"
-            className="block w-full bg-[#c19977] py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-black hover:bg-[#d4b580] transition-all shadow-lg active:scale-[0.98]"
+            className="  block w-full bg-[#c19977] py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-black hover:bg-black hover:text-white border hover:border-[#c19977] hover:border-width-[2px] transition-all shadow-lg active:scale-[0.98]"
           >
-            Authorize & Book
+            Authorize Access
           </Link>
           <button
             onClick={onClose}
-            className="block w-full py-3 text-[10px] uppercase tracking-widest text-gray-600 hover:text-white transition-colors"
+            className="block w-full py-3 text-[10px] uppercase tracking-widest text-gray-400 hover:text-white transition-colors"
           >
-            Maybe Later
+            Continue Browsing
           </button>
         </div>
       </div>
