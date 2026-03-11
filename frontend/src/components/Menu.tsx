@@ -2,10 +2,21 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { memo, useEffect, useState, useCallback } from "react";
+import { memo, useEffect, useState, useCallback, useMemo } from "react";
 import { Alert } from "./Alert";
 import { AlertState } from "@/types";
 
+interface BackendMenuType {
+  id: number;
+  name: string;
+  description?: string;
+  price: string;
+  category: string;
+  image_url?: string;
+  badge?: string;
+}
+
+// --- AUTH MODAL (Restored to your exact design) ---
 const AuthModal = ({
   isOpen,
   onClose,
@@ -32,7 +43,7 @@ const AuthModal = ({
         <div className="space-y-3">
           <Link
             href="/login"
-            className="  block w-full bg-[#c19977] py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-black hover:bg-black hover:text-white border hover:border-[#c19977] hover:border-width-[2px] transition-all shadow-lg active:scale-[0.98]"
+            className="block w-full bg-[#c19977] py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-black hover:bg-black hover:text-white border hover:border-[#c19977] hover:border-width-[2px] transition-all shadow-lg active:scale-[0.98]"
           >
             Authorize Access
           </Link>
@@ -48,16 +59,7 @@ const AuthModal = ({
   );
 };
 
-interface BackendMenuType {
-  id: number;
-  name: string;
-  description?: string;
-  price: string;
-  category: string;
-  image_url?: string;
-  badge?: string;
-}
-
+// --- MENU CARD (Restored with your hover effects and layout) ---
 const MenuCard = memo(
   ({
     id,
@@ -77,8 +79,6 @@ const MenuCard = memo(
     const [isOrdering, setIsOrdering] = useState(false);
     const [quantity, setQuantity] = useState(1);
     const [showAuthModal, setShowAuthModal] = useState(false);
-    
-    // New state for description expansion
     const [isExpanded, setIsExpanded] = useState(false);
 
     const [alertState, setAlertState] = useState<AlertState>({
@@ -91,7 +91,7 @@ const MenuCard = memo(
       (type: AlertState["type"], message: string, title?: string) => {
         setAlertState({ isVisible: true, type, message, title });
       },
-      [],
+      []
     );
 
     const hideAlert = useCallback(() => {
@@ -122,7 +122,7 @@ const MenuCard = memo(
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify(orderPayload),
-          },
+          }
         );
 
         if (!response.ok) {
@@ -133,9 +133,9 @@ const MenuCard = memo(
         showAlert(
           "success",
           `${quantity}x ${title} has been added to your selection.`,
-          "Order Placed",
+          "Order Placed"
         );
-        setQuantity(1); 
+        setQuantity(1);
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Failed to place order.";
@@ -178,8 +178,11 @@ const MenuCard = memo(
 
               {description && (
                 <div className="mt-1">
-                  {/* Dynamic class: if expanded, remove line-clamp */}
-                  <p className={`card-text label-1 opacity-60 transition-all duration-300 ${isExpanded ? "" : "line-clamp-1"}`}>
+                  <p
+                    className={`card-text label-1 opacity-60 transition-all duration-300 ${
+                      isExpanded ? "" : "line-clamp-1"
+                    }`}
+                  >
                     {description}
                   </p>
                   <button
@@ -213,7 +216,7 @@ const MenuCard = memo(
                 <button
                   onClick={handleOrder}
                   disabled={isOrdering}
-                  className=" btn-secondary px-6 py-2 label-2 uppercase tracking-widest border border-[#c19977] text-black font-bold hover:bg-black hover:text-white transition-all disabled:opacity-50"
+                  className="btn-secondary px-6 py-2 label-2 uppercase tracking-widest border border-[#c19977] text-black font-bold hover:bg-black hover:text-white transition-all disabled:opacity-50"
                 >
                   {isOrdering ? "Ordering" : "Order"}
                 </button>
@@ -238,11 +241,11 @@ const MenuCard = memo(
         />
       </li>
     );
-  },
+  }
 );
-
 MenuCard.displayName = "MenuCard";
 
+// --- MENU CATEGORY (Restored with your specific button design) ---
 const MenuCategory = memo(
   ({
     title,
@@ -254,11 +257,7 @@ const MenuCategory = memo(
     className?: string;
   }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    
-    // Set your limit here
     const LIMIT = 4;
-    
-    // Use the LIMIT for the slice so it only shows 4 initially
     const itemsToShow = isExpanded ? arr : arr.slice(0, LIMIT);
 
     return (
@@ -277,8 +276,7 @@ const MenuCategory = memo(
             />
           ))}
         </ul>
-        
-        {/* Only show button if array is longer than your limit */}
+
         {arr.length > LIMIT && (
           <button
             className="btn btn-primary mt-30 mx-auto"
@@ -294,93 +292,90 @@ const MenuCategory = memo(
         )}
       </div>
     );
-  },
+  }
 );
-
 MenuCategory.displayName = "MenuCategory";
 
+// --- MAIN MENU (Logic for One-Time Fetching + Content De-duplication) ---
 export const Menu = memo(() => {
   const [menuList, setMenuList] = useState<BackendMenuType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isFetchingMore, setIsFetchingMore] = useState(false); // <--- New state for button
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
 
-  const fetchMenu = async (pageNumber: number) => {
-    // If we are just appending, trigger the small loader
-    if (pageNumber > 1) setIsFetchingMore(true);
-    
+  const fetchMenu = useCallback(async () => {
     try {
+      setLoading(true);
+      // Fetching everything in one go (limit 500) to stop the duplication shuffle
       const res = await fetch(
-        `https://meraki-cafe-restaurant-and-bar-one.vercel.app/api/menu?page=${pageNumber}&limit=25`
+        `https://meraki-cafe-restaurant-and-bar-one.vercel.app/api/menu?page=1&limit=500`
       );
       const json = await res.json();
-      
-      const newItems = json.data || [];
-      
-      setMenuList((prev) => [...prev, ...newItems]);
-      setHasMore(newItems.length === 25); // Assuming the backend returns less than 25 items when there are no more
+      const items = json.data || [];
+
+      setMenuList(items);
     } catch (err) {
       console.error("Failed to fetch menu:", err);
     } finally {
       setLoading(false);
-      setIsFetchingMore(false); // <--- Stop the loader
     }
-  };
-
-  useEffect(() => {
-    fetchMenu(1);
   }, []);
 
-  const handleLoadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchMenu(nextPage);
-  };
+  useEffect(() => {
+    fetchMenu();
+  }, [fetchMenu]);
 
-  if (loading && menuList.length === 0)
+  // STABLE GROUPING: This ensures no items repeat and categories stay sorted
+  const sortedCategories = useMemo(() => {
+    const groups: Record<string, BackendMenuType[]> = {};
+    const seenNamesPerCategory: Record<string, Set<string>> = {};
+
+    menuList.forEach((item) => {
+      // 1. Normalize Category
+      const rawCat = item.category?.trim() || "General";
+      const cat = rawCat.charAt(0).toUpperCase() + rawCat.slice(1).toLowerCase();
+
+      // 2. Normalize Item Name
+      const itemName = item.name.trim().toLowerCase();
+
+      if (!groups[cat]) {
+        groups[cat] = [];
+        seenNamesPerCategory[cat] = new Set();
+      }
+
+      // 3. De-duplication logic (Both ID and Name)
+      if (
+        !groups[cat].some((i) => i.id === item.id) &&
+        !seenNamesPerCategory[cat].has(itemName)
+      ) {
+        groups[cat].push(item);
+        seenNamesPerCategory[cat].add(itemName);
+      }
+    });
+
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [menuList]);
+
+  if (loading && menuList.length === 0) {
     return (
       <div className="section text-center">
         <p className="headline-1 animate-pulse">Loading Menu...</p>
       </div>
     );
-
-  const groupedMenu = menuList.reduce((acc: Record<string, BackendMenuType[]>, item) => {
-    const category = item.category || "General";
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(item);
-    return acc;
-  }, {});
+  }
 
   return (
     <section className="section menu" aria-label="menu-label" id="menu">
       <div className="custom-container">
-        
-        {Object.entries(groupedMenu).map(([category, items]) => (
-          <MenuCategory key={category} title={category} arr={items} className="mt-40" />
+        {sortedCategories.map(([category, items]) => (
+          <MenuCategory
+            key={category}
+            title={category}
+            arr={items}
+            className="mt-40"
+          />
         ))}
-
-        {hasMore && (
-          <div className="text-center mt-20">
-            <button 
-              onClick={handleLoadMore}
-              disabled={isFetchingMore} // <--- Disables button while fetching
-              className={`btn btn-primary px-8 py-3 transition-all duration-300 ${isFetchingMore ? 'opacity-50 cursor-wait' : 'hover:text-black'}`}
-            >
-              <span className="text text-1">
-                {isFetchingMore ? "Loading Items..." : "Load More Items"}
-              </span>
-              <span className="text text-2" aria-hidden="true">
-                {isFetchingMore ? "Loading Items..." : "Load More Items"}
-              </span>
-            </button>
-          </div>
-        )}
       </div>
     </section>
   );
 });
-
-Menu.displayName = "Menu";
 
 Menu.displayName = "Menu";
