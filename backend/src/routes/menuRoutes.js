@@ -13,7 +13,7 @@ router.get(
   '/',
   [
     query('page').optional().isInt({ min: 1 }).toInt(),
-    query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+    query('limit').optional().isInt({ min: 1, max: 500 }).toInt(),
     query('category').optional().isString()
   ],
   validateRequest,
