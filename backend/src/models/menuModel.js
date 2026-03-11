@@ -92,7 +92,7 @@ async function listMenuItems({ page = 1, limit = 10, category }) {
   const query = `
     SELECT * FROM menu
     ${where}
-    ORDER BY created_at DESC
+    ORDER BY created_at DESC, id ASC
     LIMIT $${params.length - 1} OFFSET $${params.length};
   `;
 
