@@ -20,7 +20,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:3000",
   "https://meraki-cafe-restaurant-and-bar.vercel.app",
-  "https://www.merakirestro.com/",
+  "https://www.merakirestro.com",
   "https://meraki-cafe-restaurant-and-bar-dun.vercel.app"
 ];
 
