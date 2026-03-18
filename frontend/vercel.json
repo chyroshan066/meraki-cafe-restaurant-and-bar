@@ -3,15 +3,8 @@
     {
       "source": "/:path*",
       "has": [
-        {
-          "type": "host",
-          "value": "merakirestro.com"
-        },
-        {
-          "type": "header",
-          "key": "x-forwarded-proto",
-          "value": "http"
-        }
+        { "type": "host", "value": "merakirestro.com" },
+        { "type": "header", "key": "x-forwarded-proto", "value": "http" }
       ],
       "destination": "https://www.merakirestro.com/:path*",
       "permanent": true
@@ -19,18 +12,17 @@
     {
       "source": "/:path*",
       "has": [
-        {
-          "type": "host",
-          "value": "www.merakirestro.com"
-        },
-        {
-          "type": "header",
-          "key": "x-forwarded-proto",
-          "value": "http"
-        }
+        { "type": "host", "value": "www.merakirestro.com" },
+        { "type": "header", "key": "x-forwarded-proto", "value": "http" }
       ],
       "destination": "https://www.merakirestro.com/:path*",
       "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/dashboard/:path*",
+      "destination": "https://meraki-cafe-restaurant-and-bar-dun.vercel.app/:path*"
     }
   ]
 }
