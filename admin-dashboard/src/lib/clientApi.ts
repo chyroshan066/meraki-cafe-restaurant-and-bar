@@ -1,7 +1,7 @@
 'use client';
 
 const DEFAULT_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? 'https://meraki-cafe-restaurant-and-bar-one.vercel.app/api';
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? 'https://api.merakirestro.com/api';
 
 const TOKEN_KEY = 'token';
 const USER_KEY = 'meraki_admin_user';

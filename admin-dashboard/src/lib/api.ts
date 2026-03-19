@@ -1,4 +1,4 @@
-const DEFAULT_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://meraki-cafe-restaurant-and-bar-one.vercel.app/api";
+const DEFAULT_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.merakirestro.com/api";
 
 export type ApiConfig = {
   baseUrl?: string;
